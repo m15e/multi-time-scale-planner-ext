@@ -295,6 +295,9 @@ class MultiScalePlanner {
     }
 
     async loadQuarterlyData() {
+        // Update progress before loading to ensure current state
+        await this.updateGoalProgress();
+        
         const quarterData = await this.storage.getQuarterData(this.currentKeys.quarter);
         const goalsContainer = document.querySelector('.goals-container');
         
@@ -309,9 +312,9 @@ class MultiScalePlanner {
                     <span class="goal-title">${goal.title}</span>
                     <div class="goal-progress">
                         <div class="progress-bar">
-                            <div class="progress-fill" style="width: ${goal.progress}%"></div>
+                            <div class="progress-fill" style="width: ${goal.progress || 0}%"></div>
                         </div>
-                        <span class="progress-text">${goal.progress}%</span>
+                        <span class="progress-text">${goal.progress || 0}%</span>
                     </div>
                 </div>
                 <div class="goal-actions">
@@ -889,25 +892,28 @@ class MultiScalePlanner {
             completedAt: checkbox.checked ? new Date().toISOString() : null
         });
         
-        // Update goal progress when task is completed
-        if (checkbox.checked) {
-            await this.updateGoalProgress();
-        }
+        // Update goal progress when task completion state changes
+        await this.updateGoalProgress();
     }
 
     async updateGoalProgress() {
-        const weekData = await this.storage.getWeekData(this.currentKeys.week);
         const quarterData = await this.storage.getQuarterData(this.currentKeys.quarter);
         
-        // Calculate progress for each goal based on completed tasks
+        // Calculate progress for each goal based on completed tasks across all weeks
         for (const goal of quarterData.goals) {
-            const relatedTasks = weekData.tasks.filter(t => t.goalId === goal.id);
-            if (relatedTasks.length > 0) {
-                const completedTasks = relatedTasks.filter(t => t.completed);
-                const progress = Math.round((completedTasks.length / relatedTasks.length) * 100);
+            const allTasksForGoal = await this.storage.getAllTasksForGoal(goal.id);
+            
+            if (allTasksForGoal.length > 0) {
+                const completedTasks = allTasksForGoal.filter(t => t.completed);
+                const progress = Math.round((completedTasks.length / allTasksForGoal.length) * 100);
                 
                 await this.storage.updateGoal(this.currentKeys.quarter, goal.id, {
                     progress: progress
+                });
+            } else {
+                // If no tasks are linked to this goal, set progress to 0
+                await this.storage.updateGoal(this.currentKeys.quarter, goal.id, {
+                    progress: 0
                 });
             }
         }
@@ -992,6 +998,8 @@ class MultiScalePlanner {
                     goalId: linkValue || null
                 });
                 await this.loadWeeklyData();
+                // Update goal progress when new task is added
+                await this.updateGoalProgress();
                 break;
                 
             case 'priority':
@@ -1367,6 +1375,8 @@ class MultiScalePlanner {
             }
             // Reload the tasks to restore normal view
             await this.loadWeeklyData();
+            // Update goal progress in case task relationships changed
+            await this.updateGoalProgress();
         };
         
         // Handle cancel on Escape
@@ -1436,6 +1446,8 @@ class MultiScalePlanner {
             }
             // Reload the goals to restore normal view
             await this.loadQuarterlyData();
+            // Update progress to ensure current state
+            await this.updateGoalProgress();
         };
         
         // Handle cancel on Escape
@@ -1471,6 +1483,9 @@ class MultiScalePlanner {
             
             // Also reload weekly tasks to update their links
             await this.loadWeeklyData();
+            
+            // Update progress for remaining goals
+            await this.updateGoalProgress();
         }
     }
 }
