@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Scale Planner</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header with tab navigation -->
+        <header class="header">
+            <nav class="tabs">
+                <button class="tab-button" data-tab="quarterly">Quarterly</button>
+                <button class="tab-button active" data-tab="weekly">Weekly</button>
+                <button class="tab-button" data-tab="daily">Daily</button>
+            </nav>
+            <div class="period-indicator">
+                <span id="current-period">July 2024 - Week 29</span>
+            </div>
+        </header>
+
+        <!-- Quarterly View -->
+        <div class="tab-content" id="quarterly-tab">
+            <div class="view-header">
+                <h2>Q3 2024 Goals</h2>
+                <div class="header-controls">
+                    <button class="add-button" id="add-goal">+ Add Goal</button>
+                    <button class="review-button" id="quarterly-review">Review</button>
+                </div>
+            </div>
+            <div class="goals-container">
+                <div class="goal-item">
+                    <div class="goal-content">
+                        <span class="goal-title">Complete certification</span>
+                        <div class="goal-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 60%"></div>
+                            </div>
+                            <span class="progress-text">60%</span>
+                        </div>
+                    </div>
+                    <div class="goal-actions">
+                        <button class="edit-goal-btn" title="Edit">✎</button>
+                        <button class="delete-goal-btn" title="Delete">×</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weekly View -->
+        <div class="tab-content" id="weekly-tab">
+            <div class="view-header">
+                <h2>Week 29 Tasks</h2>
+                <div class="header-controls">
+                    <button class="add-button" id="add-task">+ Add Task</button>
+                    <button class="review-button" id="weekly-review">Review</button>
+                </div>
+            </div>
+            <div class="tasks-container">
+                <div class="task-item">
+                    <input type="checkbox" class="task-checkbox">
+                    <span class="task-title">Study chapters 1-3</span>
+                    <span class="task-goal">→ Complete certification</span>
+                    <div class="task-actions">
+                        <button class="edit-task-btn" title="Edit">✎</button>
+                        <button class="delete-task-btn" title="Delete">×</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Daily View -->
+        <div class="tab-content active" id="daily-tab">
+            <div class="view-header">
+                <h2>Today's Priorities</h2>
+                <div class="header-controls">
+                    <button class="add-button" id="add-priority">+ Add Priority</button>
+                    <span class="date-display">July 16, 2024</span>
+                </div>
+            </div>
+            
+            <div class="priorities-section">
+                <div class="priority-item" draggable="true" data-priority-id="1">
+                    <div class="priority-drag-handle">⋮⋮</div>
+                    <div class="priority-number">1</div>
+                    <div class="priority-content">
+                        <span class="priority-title">Review chapter 2</span>
+                        <span class="priority-link">→ Study chapters 1-3</span>
+                    </div>
+                    <div class="priority-actions">
+                        <button class="focus-button" data-priority="1">Focus</button>
+                        <button class="edit-priority-btn" title="Edit">✎</button>
+                        <button class="delete-priority-btn" title="Delete">×</button>
+                    </div>
+                </div>
+                <div class="priority-item" draggable="true" data-priority-id="2">
+                    <div class="priority-drag-handle">⋮⋮</div>
+                    <div class="priority-number">2</div>
+                    <div class="priority-content">
+                        <span class="priority-title">Complete assignment</span>
+                        <span class="priority-link">→ Study chapters 1-3</span>
+                    </div>
+                    <div class="priority-actions">
+                        <button class="focus-button" data-priority="2">Focus</button>
+                        <button class="edit-priority-btn" title="Edit">✎</button>
+                        <button class="delete-priority-btn" title="Delete">×</button>
+                    </div>
+                </div>
+                <div class="priority-item" draggable="true" data-priority-id="3">
+                    <div class="priority-drag-handle">⋮⋮</div>
+                    <div class="priority-number">3</div>
+                    <div class="priority-content">
+                        <span class="priority-title">Team meeting prep</span>
+                        <span class="priority-link">→ Complete certification</span>
+                    </div>
+                    <div class="priority-actions">
+                        <button class="focus-button" data-priority="3">Focus</button>
+                        <button class="edit-priority-btn" title="Edit">✎</button>
+                        <button class="delete-priority-btn" title="Delete">×</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="current-focus">
+                <div class="focus-header">
+                    <h3>Current Focus</h3>
+                    <div class="timer-display" id="timer-display">00:00</div>
+                </div>
+                <div class="focus-content">
+                    <div class="focus-task-selector">
+                        <select id="focus-task-select" class="focus-select">
+                            <option value="">Select a priority to focus on...</option>
+                        </select>
+                    </div>
+                    <div class="focus-active-task" id="focus-active-task" style="display: none;">
+                        <div class="active-task-info">
+                            <span class="active-task-title" id="active-task-title"></span>
+                            <span class="active-task-duration" id="active-task-duration">Session: 00:00</span>
+                        </div>
+                        <div class="focus-controls">
+                            <button class="timer-button" id="start-timer">Start</button>
+                            <button class="timer-button secondary" id="pause-timer" style="display: none;">Pause</button>
+                            <button class="timer-button secondary" id="reset-timer">Reset</button>
+                            <button class="complete-button" id="complete-task">Complete</button>
+                            <button class="change-task-button" id="change-task">Change Task</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="time-blocks">
+                <div class="time-blocks-header">
+                    <h3>Time Blocks</h3>
+                    <button class="add-button" id="add-time-block">+ Add Block</button>
+                </div>
+                <div class="time-blocks-container">
+                    <div class="time-block" draggable="true" data-block-id="1">
+                        <div class="drag-handle">⋮⋮</div>
+                        <span class="time-range">09:00-10:30</span>
+                        <div class="block-bar">
+                            <div class="block-fill" style="width: 100%"></div>
+                        </div>
+                        <span class="block-task">Review chapter 2</span>
+                        <div class="block-actions">
+                            <button class="edit-block-btn" title="Edit">✎</button>
+                            <button class="delete-block-btn" title="Delete">×</button>
+                        </div>
+                    </div>
+                    <div class="time-block" draggable="true" data-block-id="2">
+                        <div class="drag-handle">⋮⋮</div>
+                        <span class="time-range">10:30-11:00</span>
+                        <div class="block-bar">
+                            <div class="block-fill break" style="width: 100%"></div>
+                        </div>
+                        <span class="block-task">Break</span>
+                        <div class="block-actions">
+                            <button class="edit-block-btn" title="Edit">✎</button>
+                            <button class="delete-block-btn" title="Delete">×</button>
+                        </div>
+                    </div>
+                    <div class="time-block" draggable="true" data-block-id="3">
+                        <div class="drag-handle">⋮⋮</div>
+                        <span class="time-range">11:00-12:00</span>
+                        <div class="block-bar">
+                            <div class="block-fill" style="width: 100%"></div>
+                        </div>
+                        <span class="block-task">Complete assignment</span>
+                        <div class="block-actions">
+                            <button class="edit-block-btn" title="Edit">✎</button>
+                            <button class="delete-block-btn" title="Delete">×</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quick-capture">
+                <h3>Quick Capture</h3>
+                <input type="text" class="quick-input" placeholder="Add quick todo...">
+                <div class="quick-todos">
+                    <div class="quick-todo">
+                        <input type="checkbox">
+                        <span class="todo-text">Email client about project</span>
+                        <div class="todo-actions">
+                            <button class="edit-todo-btn" title="Edit">✎</button>
+                            <button class="delete-todo-btn" title="Delete">×</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="productivity-stats">
+                <div class="stats-header">
+                    <h3>Today's Focus Sessions</h3>
+                    <button class="stats-toggle" id="toggle-stats">📊</button>
+                </div>
+                <div class="stats-content" id="stats-content">
+                    <div class="daily-summary">
+                        <div class="stat-item">
+                            <span class="stat-label">Total Focus Time</span>
+                            <span class="stat-value" id="total-focus-time">0m</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Sessions</span>
+                            <span class="stat-value" id="session-count">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Average Session</span>
+                            <span class="stat-value" id="avg-session-length">0m</span>
+                        </div>
+                    </div>
+                    <div class="session-list" id="session-list">
+                        <div class="session-item">
+                            <span class="session-task">Review chapter 2</span>
+                            <span class="session-duration">25m</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for adding items -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modal-title">Add Item</h3>
+                <button class="modal-close" id="modal-close">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="modal-form">
+                    <div class="form-group">
+                        <label for="item-title">Title:</label>
+                        <input type="text" id="item-title" required>
+                    </div>
+                    <div class="form-group" id="link-group" style="display: none;">
+                        <label for="item-link">Link to:</label>
+                        <select id="item-link">
+                            <option value="">None</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-cancel" id="modal-cancel">Cancel</button>
+                        <button type="submit" class="btn-primary">Add</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Time Block Modal -->
+    <div class="modal-overlay" id="time-block-modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="time-block-modal-title">Add Time Block</h3>
+                <button class="modal-close" id="time-block-modal-close">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="time-block-form">
+                    <div class="form-group">
+                        <label for="block-start-time">Start Time:</label>
+                        <input type="time" id="block-start-time" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="block-end-time">End Time:</label>
+                        <input type="time" id="block-end-time" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="block-task">Task:</label>
+                        <input type="text" id="block-task" placeholder="What will you work on?" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="block-type">Type:</label>
+                        <select id="block-type">
+                            <option value="work">Work</option>
+                            <option value="break">Break</option>
+                            <option value="meeting">Meeting</option>
+                            <option value="personal">Personal</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-cancel" id="time-block-cancel">Cancel</button>
+                        <button type="submit" class="btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review Modal -->
+    <div class="modal-overlay" id="review-modal-overlay">
+        <div class="modal review-modal">
+            <div class="modal-header">
+                <h3 id="review-modal-title">Weekly Review</h3>
+                <button class="modal-close" id="review-modal-close">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="review-section">
+                    <h4>What went well this period?</h4>
+                    <textarea id="review-went-well" placeholder="Reflect on your successes..."></textarea>
+                </div>
+                <div class="review-section">
+                    <h4>What could be improved?</h4>
+                    <textarea id="review-improvements" placeholder="Areas for improvement..."></textarea>
+                </div>
+                <div class="review-section">
+                    <h4>Key insights and learnings</h4>
+                    <textarea id="review-insights" placeholder="What did you learn?"></textarea>
+                </div>
+                <div class="review-section">
+                    <h4>Action items for next period</h4>
+                    <textarea id="review-actions" placeholder="What will you do differently?"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" id="review-cancel">Skip</button>
+                    <button type="button" class="btn-primary" id="review-save">Save Review</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../lib/storage.js"></script>
+    <script src="../lib/time-tracker.js"></script>
+    <script src="popup.js"></script>
+</body>
+</html>

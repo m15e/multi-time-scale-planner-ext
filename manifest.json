@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Multi-Scale Planner",
+  "version": "1.0.0",
+  "description": "Implement Cal Newport's multi-scale planning system: quarterly goals → weekly tasks → daily execution",
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "Multi-Scale Planner"
+  },
+  "background": {
+    "service_worker": "background/service-worker.js"
+  },
+  "commands": {
+    "open-planner": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+P"
+      },
+      "description": "Open Multi-Scale Planner"
+    }
+  }
+}
