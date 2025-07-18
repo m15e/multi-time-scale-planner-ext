@@ -17,6 +17,7 @@
             </nav>
             <div class="period-indicator">
                 <span id="current-period">July 2024 - Week 29</span>
+                <button class="settings-button" id="settings-button" title="Settings">⚙️</button>
             </div>
         </header>
 
@@ -334,6 +335,38 @@
                 <div class="form-actions">
                     <button type="button" class="btn-cancel" id="review-cancel">Skip</button>
                     <button type="button" class="btn-primary" id="review-save">Save Review</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settings-modal-overlay">
+        <div class="modal settings-modal">
+            <div class="modal-header">
+                <h3>Settings</h3>
+                <button class="modal-close" id="settings-modal-close">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h4>Data Management</h4>
+                    <div class="settings-actions">
+                        <button class="settings-action-btn export-btn" id="export-data">
+                            💾 Export Data
+                        </button>
+                        <button class="settings-action-btn import-btn" id="import-data">
+                            📁 Import Data
+                        </button>
+                        <button class="settings-action-btn reset-btn" id="reset-app">
+                            🗑️ Reset App
+                        </button>
+                    </div>
+                    <input type="file" id="import-file" accept=".json" style="display: none;">
+                </div>
+                <div class="settings-section">
+                    <h4>About</h4>
+                    <p class="settings-info">Multi-Scale Planner v1.0</p>
+                    <p class="settings-info">Implementing Cal Newport's deep work methodology</p>
                 </div>
             </div>
         </div>

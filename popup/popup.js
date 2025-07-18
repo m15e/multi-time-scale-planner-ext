@@ -66,6 +66,11 @@ class MultiScalePlanner {
             this.toggleStats();
         });
 
+        // Settings button
+        document.getElementById('settings-button').addEventListener('click', () => {
+            this.openSettingsModal();
+        });
+
         // Quick capture
         const quickInput = document.querySelector('.quick-input');
         quickInput.addEventListener('keypress', (e) => {
@@ -228,6 +233,34 @@ class MultiScalePlanner {
             if (e.target === e.currentTarget) {
                 this.closeTimeBlockModal();
             }
+        });
+
+        // Settings modal event listeners
+        document.getElementById('settings-modal-close').addEventListener('click', () => {
+            this.closeSettingsModal();
+        });
+
+        document.getElementById('settings-modal-overlay').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                this.closeSettingsModal();
+            }
+        });
+
+        // Settings action buttons
+        document.getElementById('export-data').addEventListener('click', () => {
+            this.exportData();
+        });
+
+        document.getElementById('import-data').addEventListener('click', () => {
+            document.getElementById('import-file').click();
+        });
+
+        document.getElementById('import-file').addEventListener('change', (e) => {
+            this.importData(e.target.files[0]);
+        });
+
+        document.getElementById('reset-app').addEventListener('click', () => {
+            this.resetApp();
         });
 
         // Keyboard shortcuts for timer
@@ -1486,6 +1519,109 @@ class MultiScalePlanner {
             
             // Update progress for remaining goals
             await this.updateGoalProgress();
+        }
+    }
+
+    // Settings Modal Methods
+    openSettingsModal() {
+        document.getElementById('settings-modal-overlay').classList.add('active');
+    }
+
+    closeSettingsModal() {
+        document.getElementById('settings-modal-overlay').classList.remove('active');
+    }
+
+    async exportData() {
+        try {
+            const data = await this.storage.exportData();
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `multi-scale-planner-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert('Data exported successfully!');
+        } catch (error) {
+            console.error('Export failed:', error);
+            alert('Failed to export data. Please try again.');
+        }
+    }
+
+    async importData(file) {
+        if (!file) return;
+        
+        try {
+            const text = await file.text();
+            const success = await this.storage.importData(text);
+            
+            if (success) {
+                alert('Data imported successfully! The app will refresh.');
+                // Refresh the current view
+                await this.loadData();
+                this.closeSettingsModal();
+            } else {
+                alert('Failed to import data. Please check the file format.');
+            }
+        } catch (error) {
+            console.error('Import failed:', error);
+            alert('Failed to import data. Please check the file format.');
+        }
+        
+        // Reset the file input
+        document.getElementById('import-file').value = '';
+    }
+
+    async resetApp() {
+        const confirmed = confirm(
+            'Are you sure you want to reset the app?\n\n' +
+            'This will permanently delete ALL data including:\n' +
+            '• All quarterly goals\n' +
+            '• All weekly tasks\n' +
+            '• All daily priorities\n' +
+            '• All time blocks\n' +
+            '• All quick todos\n' +
+            '• All focus session history\n' +
+            '• All reviews\n\n' +
+            'This action cannot be undone.\n\n' +
+            'Type "RESET" to confirm:'
+        );
+        
+        if (confirmed) {
+            const confirmation = prompt('Type "RESET" to confirm the app reset:');
+            if (confirmation === 'RESET') {
+                try {
+                    await this.storage.clearAllData();
+                    
+                    // Clear time tracker sessions
+                    await chrome.storage.local.remove(['sessions']);
+                    
+                    // Clear reviews
+                    await chrome.storage.local.remove(['reviews']);
+                    
+                    alert('App has been reset successfully! All data has been cleared.');
+                    
+                    // Refresh the app
+                    await this.loadData();
+                    this.closeSettingsModal();
+                    
+                    // Reset current focus and timer
+                    this.currentFocus = null;
+                    this.timeTracker.reset();
+                    this.updateTimerDisplay();
+                    this.showTaskSelector();
+                    
+                } catch (error) {
+                    console.error('Reset failed:', error);
+                    alert('Failed to reset the app. Please try again.');
+                }
+            } else {
+                alert('Reset cancelled. Your data is safe.');
+            }
         }
     }
 }
