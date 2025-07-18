@@ -5,7 +5,8 @@
   "description": "Implement Cal Newport's multi-scale planning system: quarterly goals → weekly tasks → daily execution",
   "permissions": [
     "storage",
-    "activeTab"
+    "activeTab",
+    "alarms"
   ],
   "action": {
     "default_popup": "popup/popup.html",

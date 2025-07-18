@@ -16,7 +16,7 @@ class MultiScalePlanner {
     async init() {
         await this.setupEventListeners();
         await this.loadData();
-        this.setupTimeTracker();
+        await this.setupTimeTracker();
         this.updatePeriodIndicator();
     }
 
@@ -681,7 +681,7 @@ class MultiScalePlanner {
         this.updateTimerDisplay();
     }
 
-    setupTimeTracker() {
+    async setupTimeTracker() {
         this.timeTracker.onTick((elapsed) => {
             this.updateTimerDisplay(elapsed);
         });
@@ -695,6 +695,16 @@ class MultiScalePlanner {
             this.updateTimerButtons(false);
             document.getElementById('timer-display').classList.remove('running');
         });
+        
+        // Wait for initialization to complete
+        await this.timeTracker.initializeFromBackground();
+        
+        // Update UI based on current timer state
+        this.updateTimerButtons(this.timeTracker.isRunning);
+        if (this.timeTracker.isRunning) {
+            document.getElementById('timer-display').classList.add('running');
+        }
+        this.updateTimerDisplay(this.timeTracker.elapsedTime);
     }
 
     updateTimerButtons(isRunning) {
@@ -739,27 +749,35 @@ class MultiScalePlanner {
         }
     }
 
-    startTimer() {
+    async startTimer() {
         if (!this.currentFocus) {
             alert('Please select a focus task first');
             return;
         }
         
-        this.timeTracker.start();
+        // Get current focus task details
+        const dayData = await this.storage.getDayData(this.currentKeys.day);
+        const currentPriority = dayData.priorities.find(p => p.id === this.currentFocus);
+        
+        if (currentPriority) {
+            await this.timeTracker.start(this.currentFocus, currentPriority.title);
+        } else {
+            await this.timeTracker.start();
+        }
     }
 
-    pauseTimer() {
-        this.timeTracker.stop();
+    async pauseTimer() {
+        await this.timeTracker.stop();
     }
 
-    resetTimer() {
-        this.timeTracker.reset();
+    async resetTimer() {
+        await this.timeTracker.reset();
         this.updateTimerDisplay();
     }
 
-    changeTask() {
-        this.timeTracker.stop();
-        this.timeTracker.reset();
+    async changeTask() {
+        await this.timeTracker.stop();
+        await this.timeTracker.reset();
         this.showTaskSelector();
         this.storage.setCurrentFocus(this.currentKeys.day, null);
     }
