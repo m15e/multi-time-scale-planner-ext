@@ -9,6 +9,7 @@ class MultiScalePlanner {
         this.currentTimeBlockId = null;
         this.draggedElement = null;
         this.draggedPriorityElement = null;
+        this.draggedTaskElement = null;
         
         this.init();
     }
@@ -371,7 +372,8 @@ class MultiScalePlanner {
         tasksContainer.innerHTML = weekData.tasks.map(task => {
             const relatedGoal = quarterData.goals.find(g => g.id === task.goalId);
             return `
-                <div class="task-item" data-task-id="${task.id}">
+                <div class="task-item" draggable="true" data-task-id="${task.id}">
+                    <div class="task-drag-handle">⋮⋮</div>
                     <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}>
                     <span class="task-title">${task.title}</span>
                     <span class="task-goal clickable-link" data-goal-id="${task.goalId}" data-tab="quarterly">
@@ -384,6 +386,9 @@ class MultiScalePlanner {
                 </div>
             `;
         }).join('');
+        
+        // Add drag and drop functionality
+        this.setupTaskDragAndDrop();
     }
 
     async loadDailyData() {
@@ -1299,6 +1304,70 @@ class MultiScalePlanner {
         // Refresh focus selector
         const dayData = await this.storage.getDayData(this.currentKeys.day);
         this.loadCurrentFocus(dayData);
+    }
+
+    setupTaskDragAndDrop() {
+        const taskItems = document.querySelectorAll('.task-item');
+        
+        taskItems.forEach(item => {
+            item.addEventListener('dragstart', (e) => {
+                this.draggedTaskElement = e.target;
+                e.target.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/html', e.target.outerHTML);
+            });
+            
+            item.addEventListener('dragend', (e) => {
+                e.target.classList.remove('dragging');
+                this.draggedTaskElement = null;
+                
+                // Remove all drag-over classes
+                taskItems.forEach(t => t.classList.remove('drag-over'));
+            });
+            
+            item.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                
+                if (e.target !== this.draggedTaskElement) {
+                    e.target.classList.add('drag-over');
+                }
+            });
+            
+            item.addEventListener('dragleave', (e) => {
+                e.target.classList.remove('drag-over');
+            });
+            
+            item.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.target.classList.remove('drag-over');
+                
+                if (e.target !== this.draggedTaskElement) {
+                    this.reorderTasks(this.draggedTaskElement, e.target);
+                }
+            });
+        });
+    }
+
+    async reorderTasks(draggedTask, targetTask) {
+        const container = document.querySelector('.tasks-container');
+        const tasks = Array.from(container.querySelectorAll('.task-item'));
+        
+        const draggedIndex = tasks.indexOf(draggedTask);
+        const targetIndex = tasks.indexOf(targetTask);
+        
+        if (draggedIndex > targetIndex) {
+            container.insertBefore(draggedTask, targetTask);
+        } else {
+            container.insertBefore(draggedTask, targetTask.nextSibling);
+        }
+        
+        // Get new order of task IDs
+        const newOrder = Array.from(container.querySelectorAll('.task-item'))
+            .map(task => task.dataset.taskId);
+        
+        // Update storage
+        await this.storage.reorderTasks(this.currentKeys.week, newOrder);
     }
 
     editPriority(button) {

@@ -333,6 +333,27 @@ body {
     background-color: #f8d7da;
 }
 
+.task-item.dragging {
+    opacity: 0.5;
+    transform: rotate(2deg);
+}
+
+.task-item.drag-over {
+    border-color: #007bff;
+    background-color: #e3f2fd;
+}
+
+.task-drag-handle {
+    cursor: grab;
+    color: #6c757d;
+    font-size: 12px;
+    padding: 2px;
+}
+
+.task-drag-handle:active {
+    cursor: grabbing;
+}
+
 /* Daily View */
 .priorities-section {
     margin-bottom: 24px;
