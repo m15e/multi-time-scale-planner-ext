@@ -420,10 +420,6 @@ class MultiScalePlanner {
                         </span>
                     </div>
                     <div class="priority-actions">
-                        <button class="focus-button ${dayData.currentFocus === priority.id ? 'active' : ''}" 
-                                data-priority="${priority.id}">
-                            ${dayData.currentFocus === priority.id ? 'Focused' : 'Focus'}
-                        </button>
                         <button class="edit-priority-btn" title="Edit">✎</button>
                         <button class="delete-priority-btn" title="Delete">×</button>
                     </div>
