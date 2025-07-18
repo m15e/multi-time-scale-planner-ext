@@ -663,11 +663,6 @@ class MultiScalePlanner {
         await this.storage.setCurrentFocus(this.currentKeys.day, priorityId);
         this.currentFocus = priorityId;
         
-        // Update UI
-        document.querySelectorAll('.focus-button').forEach(button => {
-            button.classList.remove('active');
-            button.textContent = 'Focus';
-        });
         
         const activeButton = document.querySelector(`[data-priority="${priorityId}"]`);
         if (activeButton) {

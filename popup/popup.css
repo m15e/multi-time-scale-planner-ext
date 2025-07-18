@@ -435,10 +435,6 @@ body {
     align-items: center;
 }
 
-.priority-actions .focus-button {
-    margin-right: 4px;
-}
-
 .edit-priority-btn,
 .delete-priority-btn {
     background: none;
@@ -472,30 +468,10 @@ body {
     background-color: #f8d7da;
 }
 
-.focus-button {
-    background: #ffc107;
-    color: #212529;
-    border: none;
-    border-radius: 4px;
-    padding: 6px 12px;
-    font-size: 12px;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-.focus-button:hover {
-    background: #ffca2c;
-}
-
-.focus-button.active {
-    background: #fd7e14;
-    color: white;
-}
-
 /* Current Focus */
 .current-focus {
-    background: #fff3cd;
-    border: 1px solid #ffeaa7;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
     border-radius: 6px;
     padding: 16px;
     margin-bottom: 24px;
