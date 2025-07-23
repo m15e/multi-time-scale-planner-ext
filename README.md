@@ -1,6 +1,74 @@
-# Multi-Scale Planner Chrome Extension
+# Multi-Scale Planner
 
-A Chrome extension implementing Cal Newport's multi-scale planning methodology: quarterly goals → weekly tasks → daily execution.
+**A Chrome extension to implement Cal Newport's multi-scale planning system, helping you connect your long-term goals with your daily actions.**
+
+---
+
+## 🌟 Core Philosophy
+
+This extension is built on Cal Newport's concept of **multi-scale planning**. The idea is to create a clear hierarchy from your high-level ambitions down to your daily schedule:
+
+1.  **Quarterly Goals:** Define your big objectives for the next few months.
+2.  **Weekly Plan:** Break down your quarterly goals into concrete tasks for the week.
+3.  **Daily Execution:** Schedule and focus on your weekly tasks each day.
+
+By connecting these scales, you ensure that your daily efforts are always aligned with your most important goals.
+
+## ✨ Key Features
+
+### 🎯 Daily Priorities Management
+
+- **Full CRUD Operations:** Easily create, edit, update, and delete your daily priorities.
+- **Drag-and-Drop Reordering:** Intuitively reorder your tasks to reflect their true importance.
+- **Task Linking:** Connect your daily priorities to your larger weekly tasks for better alignment.
+
+### ⏱️ Focus Timer
+
+- **Dedicated Focus Mode:** Select a single priority and start a timer to focus exclusively on it.
+- **Full Timer Controls:** Start, pause, reset, and complete focus sessions.
+- **Keyboard Shortcuts:** Manage your focus timer without leaving your keyboard (`Shift + Space` to start/pause, `Shift + R` to reset, `Shift + C` to complete).
+
+### 📊 Productivity Analytics
+
+- **Automatic Session Tracking:** Every completed focus session is automatically logged.
+- **Daily Stats:** View your total focus time, number of sessions, and average session duration for the day.
+- **Session History:** Review a list of your completed focus sessions to see where your time went.
+
+### 🗓️ Daily Time Blocking
+
+- **Visual Time Blocks:** Plan your day by creating time blocks for your tasks.
+- **Color-Coded Block Types:** Categorize your time into Work, Breaks, Meetings, and Personal activities.
+- **Drag-and-Drop Scheduling:** Easily adjust your schedule by dragging and dropping time blocks.
+
+## 🚀 Getting Started
+
+### Installation
+
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/your-username/multi-scale-planner-ext.git
+    ```
+2.  **Open Chrome and navigate to `chrome://extensions`**.
+3.  **Enable "Developer mode"** in the top right corner.
+4.  Click on **"Load unpacked"** and select the cloned repository's directory.
+
+### How to Use
+
+1.  **Open the Extension:** Click on the Multi-Scale Planner icon in your Chrome toolbar, or use the keyboard shortcut `Ctrl+Shift+P` (or `Cmd+Shift+P` on Mac).
+2.  **Add Your Priorities:** Start by adding your most important tasks for the day.
+3.  **Start a Focus Session:** Click the "Focus" button on a priority to start the timer and begin a deep work session.
+4.  **Plan Your Day:** Use the time blocking feature to schedule your tasks and other activities.
+5.  **Review Your Progress:** At the end of the day, check your productivity stats to see what you've accomplished.
+
+## 🤝 Contributing
+
+Contributions are welcome! If you have ideas for new features or improvements, please open an issue or submit a pull request.
+
+## 📄 License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+A Chrome extension for a multi time scale planning tool loosely based on Cal Newport's multi-scale planning methodology: quarterly goals → weekly tasks → daily execution.
 
 ## Features
 
