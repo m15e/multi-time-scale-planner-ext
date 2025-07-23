@@ -371,11 +371,13 @@ class MultiScalePlanner {
         
         tasksContainer.innerHTML = weekData.tasks.map(task => {
             const relatedGoal = quarterData.goals.find(g => g.id === task.goalId);
+            const carriedOverBadge = task.carriedOver ? `<span class="carried-over-badge" title="Carried over from ${task.carriedFromWeek}">↻</span>` : '';
             return `
                 <div class="task-item" draggable="true" data-task-id="${task.id}">
                     <div class="task-drag-handle">⋮⋮</div>
                     <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}>
                     <span class="task-title">${task.title}</span>
+                    ${carriedOverBadge}
                     <span class="task-goal clickable-link" data-goal-id="${task.goalId}" data-tab="quarterly">
                         → ${relatedGoal ? relatedGoal.title : 'No goal'}
                     </span>
