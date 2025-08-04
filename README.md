@@ -1,6 +1,6 @@
 # Multi-Scale Planner
 
-**A Chrome extension to implement Cal Newport's multi-scale planning system, helping you connect your long-term goals with your daily actions.**
+**A Chrome extension based on Cal Newport's multi-scale planning system, helping you connect your long-term goals with your daily actions.**
 
 ---
 
