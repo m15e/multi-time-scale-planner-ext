@@ -233,8 +233,8 @@ input:focus, select:focus, textarea:focus {
     font-size: 12px;
     padding: 2px 4px;
     border-radius: 3px;
-    transition: background-color 0.2s;
-    opacity: 0;
+    transition: background-color 0.2s, opacity 0.2s;
+    opacity: 0.4;
 }
 
 .goal-item:hover .edit-goal-btn,
@@ -322,8 +322,8 @@ input:focus, select:focus, textarea:focus {
     font-size: 12px;
     padding: 2px 4px;
     border-radius: 3px;
-    transition: background-color 0.2s;
-    opacity: 0;
+    transition: background-color 0.2s, opacity 0.2s;
+    opacity: 0.4;
 }
 
 .task-item:hover .edit-task-btn,
@@ -489,8 +489,8 @@ input:focus, select:focus, textarea:focus {
     font-size: 12px;
     padding: 2px 4px;
     border-radius: 3px;
-    transition: background-color 0.2s;
-    opacity: 0;
+    transition: background-color 0.2s, opacity 0.2s;
+    opacity: 0.4;
 }
 
 .priority-item:hover .edit-priority-btn,

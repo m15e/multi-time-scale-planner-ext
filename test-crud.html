@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Scale Planner CRUD Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 3px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        button {
+            margin: 5px;
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Multi-Scale Planner CRUD Test</h1>
+    <p>This page tests the CRUD functionality of the Multi-Scale Planner extension.</p>
+    
+    <div class="test-section">
+        <h2>Extension Status</h2>
+        <button onclick="checkExtension()">Check Extension</button>
+        <div id="extension-status"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Storage Test</h2>
+        <button onclick="testStorage()">Test Storage</button>
+        <div id="storage-status"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>CRUD Operations Test</h2>
+        <button onclick="testCrudOperations()">Test CRUD</button>
+        <div id="crud-status"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Drag and Drop Test</h2>
+        <p>If the extension is loaded, drag and drop should work without the insertBefore error.</p>
+        <div id="drag-drop-status"></div>
+    </div>
+
+    <script>
+        function showResult(elementId, message, isSuccess = true) {
+            const element = document.getElementById(elementId);
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${isSuccess ? 'success' : 'error'}`;
+            resultDiv.textContent = message;
+            element.appendChild(resultDiv);
+        }
+
+        function clearResults(elementId) {
+            document.getElementById(elementId).innerHTML = '';
+        }
+
+        async function checkExtension() {
+            clearResults('extension-status');
+            
+            try {
+                if (typeof chrome !== 'undefined' && chrome.storage) {
+                    showResult('extension-status', '✓ Chrome extension APIs available');
+                    
+                    // Test if we can access storage
+                    chrome.storage.local.get(null, (result) => {
+                        if (chrome.runtime.lastError) {
+                            showResult('extension-status', '✗ Storage access error: ' + chrome.runtime.lastError.message, false);
+                        } else {
+                            showResult('extension-status', '✓ Storage access working');
+                            console.log('Current storage data:', result);
+                        }
+                    });
+                } else {
+                    showResult('extension-status', '✗ Chrome extension APIs not available. Make sure to load this page from the extension context.', false);
+                }
+            } catch (error) {
+                showResult('extension-status', '✗ Error checking extension: ' + error.message, false);
+            }
+        }
+
+        async function testStorage() {
+            clearResults('storage-status');
+            
+            try {
+                // Test basic storage operations
+                const testData = { test: 'crud-fix-test', timestamp: Date.now() };
+                
+                chrome.storage.local.set(testData, () => {
+                    if (chrome.runtime.lastError) {
+                        showResult('storage-status', '✗ Storage set error: ' + chrome.runtime.lastError.message, false);
+                        return;
+                    }
+                    
+                    showResult('storage-status', '✓ Storage set operation successful');
+                    
+                    chrome.storage.local.get(['test'], (result) => {
+                        if (chrome.runtime.lastError) {
+                            showResult('storage-status', '✗ Storage get error: ' + chrome.runtime.lastError.message, false);
+                            return;
+                        }
+                        
+                        if (result.test === testData.test) {
+                            showResult('storage-status', '✓ Storage get operation successful');
+                            
+                            // Clean up test data
+                            chrome.storage.local.remove(['test'], () => {
+                                showResult('storage-status', '✓ Storage cleanup successful');
+                            });
+                        } else {
+                            showResult('storage-status', '✗ Storage data mismatch', false);
+                        }
+                    });
+                });
+                
+            } catch (error) {
+                showResult('storage-status', '✗ Storage test error: ' + error.message, false);
+            }
+        }
+
+        async function testCrudOperations() {
+            clearResults('crud-status');
+            
+            try {
+                showResult('crud-status', 'ℹ️ CRUD test requires the extension popup to be open');
+                showResult('crud-status', 'ℹ️ Try adding, editing, and deleting tasks/priorities in the extension');
+                showResult('crud-status', 'ℹ️ Check browser console for any insertBefore errors');
+                
+                // Check if we can access the main data structure
+                chrome.storage.local.get(null, (result) => {
+                    if (chrome.runtime.lastError) {
+                        showResult('crud-status', '✗ Cannot access storage for CRUD test', false);
+                        return;
+                    }
+                    
+                    const hasData = result.quarters || result.weeks || result.days;
+                    if (hasData) {
+                        showResult('crud-status', '✓ Extension data structure found');
+                        console.log('Extension data:', result);
+                    } else {
+                        showResult('crud-status', 'ℹ️ No extension data found - extension may need initialization');
+                    }
+                });
+                
+            } catch (error) {
+                showResult('crud-status', '✗ CRUD test error: ' + error.message, false);
+            }
+        }
+
+        // Auto-check extension on page load
+        window.addEventListener('load', () => {
+            setTimeout(checkExtension, 500);
+        });
+    </script>
+</body>
+</html>

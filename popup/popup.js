@@ -389,8 +389,8 @@ class MultiScalePlanner {
             `;
         }).join('');
         
-        // Add drag and drop functionality
-        this.setupTaskDragAndDrop();
+        // Add drag and drop functionality - use setTimeout to ensure DOM is updated
+        setTimeout(() => this.setupTaskDragAndDrop(), 0);
     }
 
     async loadDailyData() {
@@ -434,8 +434,8 @@ class MultiScalePlanner {
             `;
         }).join('');
         
-        // Add drag and drop functionality
-        this.setupPriorityDragAndDrop();
+        // Add drag and drop functionality - use setTimeout to ensure DOM is updated
+        setTimeout(() => this.setupPriorityDragAndDrop(), 0);
     }
 
     loadCurrentFocus(dayData) {
@@ -498,8 +498,8 @@ class MultiScalePlanner {
             .map(block => this.createTimeBlockHTML(block))
             .join('');
         
-        // Add drag and drop event listeners
-        this.setupDragAndDrop();
+        // Add drag and drop event listeners - use setTimeout to ensure DOM is updated
+        setTimeout(() => this.setupDragAndDrop(), 0);
     }
 
     createTimeBlockHTML(block) {
@@ -525,16 +525,21 @@ class MultiScalePlanner {
     setupDragAndDrop() {
         const timeBlocks = document.querySelectorAll('.time-block');
         
+        if (timeBlocks.length === 0) {
+            return; // No time blocks to set up
+        }
+        
         timeBlocks.forEach(block => {
             block.addEventListener('dragstart', (e) => {
-                this.draggedElement = e.target;
-                e.target.classList.add('dragging');
+                // Always use the .time-block element, not the target
+                this.draggedElement = e.currentTarget;
+                e.currentTarget.classList.add('dragging');
                 e.dataTransfer.effectAllowed = 'move';
-                e.dataTransfer.setData('text/html', e.target.outerHTML);
+                e.dataTransfer.setData('text/html', e.currentTarget.outerHTML);
             });
             
             block.addEventListener('dragend', (e) => {
-                e.target.classList.remove('dragging');
+                e.currentTarget.classList.remove('dragging');
                 this.draggedElement = null;
                 
                 // Remove all drag-over classes
@@ -545,21 +550,23 @@ class MultiScalePlanner {
                 e.preventDefault();
                 e.dataTransfer.dropEffect = 'move';
                 
-                if (e.target !== this.draggedElement) {
-                    e.target.classList.add('drag-over');
+                const targetBlock = e.currentTarget;
+                if (targetBlock !== this.draggedElement) {
+                    targetBlock.classList.add('drag-over');
                 }
             });
             
             block.addEventListener('dragleave', (e) => {
-                e.target.classList.remove('drag-over');
+                e.currentTarget.classList.remove('drag-over');
             });
             
             block.addEventListener('drop', (e) => {
                 e.preventDefault();
-                e.target.classList.remove('drag-over');
+                const targetBlock = e.currentTarget;
+                targetBlock.classList.remove('drag-over');
                 
-                if (e.target !== this.draggedElement) {
-                    this.reorderTimeBlocks(this.draggedElement, e.target);
+                if (targetBlock !== this.draggedElement) {
+                    this.reorderTimeBlocks(this.draggedElement, targetBlock);
                 }
             });
         });
@@ -569,21 +576,44 @@ class MultiScalePlanner {
         const container = document.querySelector('.time-blocks-container');
         const blocks = Array.from(container.querySelectorAll('.time-block'));
         
+        // Validate that both elements are children of the container
+        if (!container.contains(draggedBlock) || !container.contains(targetBlock)) {
+            console.error('Invalid drag operation: elements not found in container');
+            return;
+        }
+        
         const draggedIndex = blocks.indexOf(draggedBlock);
         const targetIndex = blocks.indexOf(targetBlock);
         
-        if (draggedIndex > targetIndex) {
-            container.insertBefore(draggedBlock, targetBlock);
-        } else {
-            container.insertBefore(draggedBlock, targetBlock.nextSibling);
+        // Only proceed if both elements are found in the list
+        if (draggedIndex === -1 || targetIndex === -1) {
+            console.error('Invalid drag operation: elements not found in blocks list');
+            return;
         }
         
-        // Get new order of block IDs
-        const newOrder = Array.from(container.querySelectorAll('.time-block'))
-            .map(block => block.dataset.blockId);
-        
-        // Update storage
-        await this.storage.reorderTimeBlocks(this.currentKeys.day, newOrder);
+        try {
+            if (draggedIndex > targetIndex) {
+                container.insertBefore(draggedBlock, targetBlock);
+            } else {
+                const nextSibling = targetBlock.nextSibling;
+                if (nextSibling) {
+                    container.insertBefore(draggedBlock, nextSibling);
+                } else {
+                    container.appendChild(draggedBlock);
+                }
+            }
+            
+            // Get new order of block IDs
+            const newOrder = Array.from(container.querySelectorAll('.time-block'))
+                .map(block => block.dataset.blockId);
+            
+            // Update storage
+            await this.storage.reorderTimeBlocks(this.currentKeys.day, newOrder);
+        } catch (error) {
+            console.error('Error reordering time blocks:', error);
+            // Reload the data to restore the correct order
+            await this.loadDailyData();
+        }
     }
 
     loadQuickTodos(dayData) {
@@ -1237,16 +1267,21 @@ class MultiScalePlanner {
     setupPriorityDragAndDrop() {
         const priorityItems = document.querySelectorAll('.priority-item');
         
+        if (priorityItems.length === 0) {
+            return; // No priority items to set up
+        }
+        
         priorityItems.forEach(item => {
             item.addEventListener('dragstart', (e) => {
-                this.draggedPriorityElement = e.target;
-                e.target.classList.add('dragging');
+                // Always use the .priority-item element, not the target
+                this.draggedPriorityElement = e.currentTarget;
+                e.currentTarget.classList.add('dragging');
                 e.dataTransfer.effectAllowed = 'move';
-                e.dataTransfer.setData('text/html', e.target.outerHTML);
+                e.dataTransfer.setData('text/html', e.currentTarget.outerHTML);
             });
             
             item.addEventListener('dragend', (e) => {
-                e.target.classList.remove('dragging');
+                e.currentTarget.classList.remove('dragging');
                 this.draggedPriorityElement = null;
                 
                 // Remove all drag-over classes
@@ -1257,21 +1292,23 @@ class MultiScalePlanner {
                 e.preventDefault();
                 e.dataTransfer.dropEffect = 'move';
                 
-                if (e.target !== this.draggedPriorityElement) {
-                    e.target.classList.add('drag-over');
+                const targetItem = e.currentTarget;
+                if (targetItem !== this.draggedPriorityElement) {
+                    targetItem.classList.add('drag-over');
                 }
             });
             
             item.addEventListener('dragleave', (e) => {
-                e.target.classList.remove('drag-over');
+                e.currentTarget.classList.remove('drag-over');
             });
             
             item.addEventListener('drop', (e) => {
                 e.preventDefault();
-                e.target.classList.remove('drag-over');
+                const targetItem = e.currentTarget;
+                targetItem.classList.remove('drag-over');
                 
-                if (e.target !== this.draggedPriorityElement) {
-                    this.reorderPriorities(this.draggedPriorityElement, e.target);
+                if (targetItem !== this.draggedPriorityElement) {
+                    this.reorderPriorities(this.draggedPriorityElement, targetItem);
                 }
             });
         });
@@ -1281,46 +1318,76 @@ class MultiScalePlanner {
         const container = document.querySelector('.priorities-section');
         const items = Array.from(container.querySelectorAll('.priority-item'));
         
+        // Validate that both elements are children of the container
+        if (!container.contains(draggedItem) || !container.contains(targetItem)) {
+            console.error('Invalid drag operation: elements not found in container');
+            return;
+        }
+        
         const draggedIndex = items.indexOf(draggedItem);
         const targetIndex = items.indexOf(targetItem);
         
-        if (draggedIndex > targetIndex) {
-            container.insertBefore(draggedItem, targetItem);
-        } else {
-            container.insertBefore(draggedItem, targetItem.nextSibling);
+        // Only proceed if both elements are found in the list
+        if (draggedIndex === -1 || targetIndex === -1) {
+            console.error('Invalid drag operation: elements not found in items list');
+            return;
         }
         
-        // Update priority numbers
-        const updatedItems = Array.from(container.querySelectorAll('.priority-item'));
-        updatedItems.forEach((item, index) => {
-            const numberElement = item.querySelector('.priority-number');
-            numberElement.textContent = index + 1;
-        });
-        
-        // Get new order of priority IDs
-        const newOrder = updatedItems.map(item => item.dataset.priorityId);
-        
-        // Update storage
-        await this.storage.reorderPriorities(this.currentKeys.day, newOrder);
-        
-        // Refresh focus selector
-        const dayData = await this.storage.getDayData(this.currentKeys.day);
-        this.loadCurrentFocus(dayData);
+        try {
+            if (draggedIndex > targetIndex) {
+                container.insertBefore(draggedItem, targetItem);
+            } else {
+                const nextSibling = targetItem.nextSibling;
+                if (nextSibling) {
+                    container.insertBefore(draggedItem, nextSibling);
+                } else {
+                    container.appendChild(draggedItem);
+                }
+            }
+            
+            // Update priority numbers
+            const updatedItems = Array.from(container.querySelectorAll('.priority-item'));
+            updatedItems.forEach((item, index) => {
+                const numberElement = item.querySelector('.priority-number');
+                if (numberElement) {
+                    numberElement.textContent = index + 1;
+                }
+            });
+            
+            // Get new order of priority IDs
+            const newOrder = updatedItems.map(item => item.dataset.priorityId);
+            
+            // Update storage
+            await this.storage.reorderPriorities(this.currentKeys.day, newOrder);
+            
+            // Refresh focus selector
+            const dayData = await this.storage.getDayData(this.currentKeys.day);
+            this.loadCurrentFocus(dayData);
+        } catch (error) {
+            console.error('Error reordering priorities:', error);
+            // Reload the data to restore the correct order
+            await this.loadDailyData();
+        }
     }
 
     setupTaskDragAndDrop() {
         const taskItems = document.querySelectorAll('.task-item');
         
+        if (taskItems.length === 0) {
+            return; // No task items to set up
+        }
+        
         taskItems.forEach(item => {
             item.addEventListener('dragstart', (e) => {
-                this.draggedTaskElement = e.target;
-                e.target.classList.add('dragging');
+                // Always use the .task-item element, not the target
+                this.draggedTaskElement = e.currentTarget;
+                e.currentTarget.classList.add('dragging');
                 e.dataTransfer.effectAllowed = 'move';
-                e.dataTransfer.setData('text/html', e.target.outerHTML);
+                e.dataTransfer.setData('text/html', e.currentTarget.outerHTML);
             });
             
             item.addEventListener('dragend', (e) => {
-                e.target.classList.remove('dragging');
+                e.currentTarget.classList.remove('dragging');
                 this.draggedTaskElement = null;
                 
                 // Remove all drag-over classes
@@ -1331,21 +1398,23 @@ class MultiScalePlanner {
                 e.preventDefault();
                 e.dataTransfer.dropEffect = 'move';
                 
-                if (e.target !== this.draggedTaskElement) {
-                    e.target.classList.add('drag-over');
+                const targetTask = e.currentTarget;
+                if (targetTask !== this.draggedTaskElement) {
+                    targetTask.classList.add('drag-over');
                 }
             });
             
             item.addEventListener('dragleave', (e) => {
-                e.target.classList.remove('drag-over');
+                e.currentTarget.classList.remove('drag-over');
             });
             
             item.addEventListener('drop', (e) => {
                 e.preventDefault();
-                e.target.classList.remove('drag-over');
+                const targetTask = e.currentTarget;
+                targetTask.classList.remove('drag-over');
                 
-                if (e.target !== this.draggedTaskElement) {
-                    this.reorderTasks(this.draggedTaskElement, e.target);
+                if (targetTask !== this.draggedTaskElement) {
+                    this.reorderTasks(this.draggedTaskElement, targetTask);
                 }
             });
         });
@@ -1355,21 +1424,44 @@ class MultiScalePlanner {
         const container = document.querySelector('.tasks-container');
         const tasks = Array.from(container.querySelectorAll('.task-item'));
         
+        // Validate that both elements are children of the container
+        if (!container.contains(draggedTask) || !container.contains(targetTask)) {
+            console.error('Invalid drag operation: elements not found in container');
+            return;
+        }
+        
         const draggedIndex = tasks.indexOf(draggedTask);
         const targetIndex = tasks.indexOf(targetTask);
         
-        if (draggedIndex > targetIndex) {
-            container.insertBefore(draggedTask, targetTask);
-        } else {
-            container.insertBefore(draggedTask, targetTask.nextSibling);
+        // Only proceed if both elements are found in the list
+        if (draggedIndex === -1 || targetIndex === -1) {
+            console.error('Invalid drag operation: elements not found in tasks list');
+            return;
         }
         
-        // Get new order of task IDs
-        const newOrder = Array.from(container.querySelectorAll('.task-item'))
-            .map(task => task.dataset.taskId);
-        
-        // Update storage
-        await this.storage.reorderTasks(this.currentKeys.week, newOrder);
+        try {
+            if (draggedIndex > targetIndex) {
+                container.insertBefore(draggedTask, targetTask);
+            } else {
+                const nextSibling = targetTask.nextSibling;
+                if (nextSibling) {
+                    container.insertBefore(draggedTask, nextSibling);
+                } else {
+                    container.appendChild(draggedTask);
+                }
+            }
+            
+            // Get new order of task IDs
+            const newOrder = Array.from(container.querySelectorAll('.task-item'))
+                .map(task => task.dataset.taskId);
+            
+            // Update storage
+            await this.storage.reorderTasks(this.currentKeys.week, newOrder);
+        } catch (error) {
+            console.error('Error reordering tasks:', error);
+            // Reload the data to restore the correct order
+            await this.loadWeeklyData();
+        }
     }
 
     editPriority(button) {
@@ -1512,19 +1604,52 @@ class MultiScalePlanner {
     }
 
     async deleteTask(button) {
-        const taskItem = button.closest('.task-item');
-        const taskId = taskItem.dataset.taskId;
-        const taskTitle = taskItem.querySelector('.task-title').textContent;
-        
-        // Confirm deletion
-        if (confirm(`Delete task "${taskTitle}"?`)) {
-            await this.storage.deleteTask(this.currentKeys.week, taskId);
+        try {
+            const taskItem = button.closest('.task-item');
+            if (!taskItem) {
+                console.error('Task item not found');
+                return;
+            }
             
-            // Reload the tasks
-            await this.loadWeeklyData();
+            const taskId = taskItem.dataset.taskId;
+            const taskTitleElement = taskItem.querySelector('.task-title');
             
-            // Update goal progress after task deletion
-            await this.updateGoalProgress();
+            if (!taskId || !taskTitleElement) {
+                console.error('Task ID or title element not found');
+                return;
+            }
+            
+            const taskTitle = taskTitleElement.textContent;
+            
+            // Confirm deletion
+            if (confirm(`Delete task "${taskTitle}"?`)) {
+                // Temporarily disable the button to prevent double-clicks
+                button.disabled = true;
+                button.textContent = '⌛';
+                
+                try {
+                    // Delete from storage
+                    await this.storage.deleteTask(this.currentKeys.week, taskId);
+                    
+                    // Update goal progress after task deletion
+                    await this.updateGoalProgress();
+                    
+                    // Reload the tasks
+                    await this.loadWeeklyData();
+                    
+                    console.log(`Task "${taskTitle}" deleted successfully`);
+                } catch (error) {
+                    console.error('Error deleting task:', error);
+                    alert('Failed to delete task. Please try again.');
+                    
+                    // Re-enable button on error
+                    button.disabled = false;
+                    button.textContent = '×';
+                }
+            }
+        } catch (error) {
+            console.error('Error in deleteTask:', error);
+            alert('An error occurred while deleting the task. Please try again.');
         }
     }
 
@@ -1704,9 +1829,99 @@ class MultiScalePlanner {
             }
         }
     }
+
+    // Debug helper functions
+    async debugStorageData() {
+        const data = await this.storage.getAllData();
+        console.log('Current storage data:', data);
+        return data;
+    }
+
+    async debugWeeklyTasks() {
+        const weekData = await this.storage.getWeekData(this.currentKeys.week);
+        console.log('Current week tasks:', weekData);
+        return weekData;
+    }
+
+    testDeleteTask(taskId) {
+        console.log(`Testing deletion of task: ${taskId}`);
+        const taskElement = document.querySelector(`[data-task-id="${taskId}"]`);
+        if (taskElement) {
+            console.log('Task element found:', taskElement);
+            const deleteButton = taskElement.querySelector('.delete-task-btn');
+            if (deleteButton) {
+                console.log('Found delete button:', deleteButton);
+                console.log('Button classes:', deleteButton.className);
+                console.log('Button parent:', deleteButton.parentElement);
+                console.log('Button style:', window.getComputedStyle(deleteButton));
+                
+                // Try to make it visible and clickable
+                deleteButton.style.opacity = '1';
+                deleteButton.style.pointerEvents = 'auto';
+                
+                console.log('Triggering click...');
+                deleteButton.click();
+            } else {
+                console.error('Delete button not found');
+                console.log('Available buttons in task:', taskElement.querySelectorAll('button'));
+            }
+        } else {
+            console.error('Task element not found');
+            console.log('Available task elements:', document.querySelectorAll('[data-task-id]'));
+        }
+    }
+
+    // Test the entire flow
+    async testDeleteFlow() {
+        try {
+            console.log('=== Testing Delete Flow ===');
+            
+            // Check current tab
+            console.log('Current tab:', this.currentTab);
+            
+            // Switch to weekly tab if needed
+            if (this.currentTab !== 'weekly') {
+                console.log('Switching to weekly tab...');
+                this.switchTab('weekly');
+                await new Promise(resolve => setTimeout(resolve, 100)); // Small delay
+            }
+            
+            // Get current week data
+            const weekData = await this.debugWeeklyTasks();
+            
+            if (weekData.tasks && weekData.tasks.length > 0) {
+                const firstTask = weekData.tasks[0];
+                console.log('Testing with first task:', firstTask);
+                this.testDeleteTask(firstTask.id);
+            } else {
+                console.log('No tasks found to test with');
+                
+                // Create a test task
+                console.log('Creating test task...');
+                await this.storage.addTask(this.currentKeys.week, {
+                    title: 'Test Task for Deletion',
+                    goalId: null
+                });
+                
+                await this.loadWeeklyData();
+                
+                // Try again
+                const newWeekData = await this.debugWeeklyTasks();
+                if (newWeekData.tasks && newWeekData.tasks.length > 0) {
+                    const testTask = newWeekData.tasks.find(t => t.title === 'Test Task for Deletion');
+                    if (testTask) {
+                        console.log('Testing with created task:', testTask);
+                        this.testDeleteTask(testTask.id);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error in testDeleteFlow:', error);
+        }
+    }
 }
 
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    new MultiScalePlanner();
+    window.planner = new MultiScalePlanner();
 });
