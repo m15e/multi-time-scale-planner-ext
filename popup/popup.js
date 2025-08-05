@@ -7,6 +7,7 @@ class MultiScalePlanner {
         this.currentFocus = null;
         this.currentModalType = null;
         this.currentTimeBlockId = null;
+        this.currentEditingTaskId = null;
         this.draggedElement = null;
         this.draggedPriorityElement = null;
         this.draggedTaskElement = null;
@@ -1054,6 +1055,19 @@ class MultiScalePlanner {
     closeModal() {
         document.getElementById('modal-overlay').classList.remove('active');
         this.currentModalType = null;
+        this.currentEditingTaskId = null;
+        
+        // Reset label text back to default
+        const linkLabel = document.querySelector('label[for="item-link"]');
+        if (linkLabel) {
+            linkLabel.textContent = 'Link to:';
+        }
+        
+        // Reset button text back to default
+        const submitButton = document.querySelector('#modal-form button[type="submit"]');
+        if (submitButton) {
+            submitButton.textContent = 'Add';
+        }
     }
 
     async handleModalSubmit() {
@@ -1079,6 +1093,28 @@ class MultiScalePlanner {
                 await this.loadWeeklyData();
                 // Update goal progress when new task is added
                 await this.updateGoalProgress();
+                break;
+                
+            case 'edit-task':
+                // Get current task to compare goalId changes
+                const weekData = await this.storage.getWeekData(this.currentKeys.week);
+                const currentTask = weekData.tasks.find(t => t.id === this.currentEditingTaskId);
+                const previousGoalId = currentTask ? currentTask.goalId : null;
+                const newGoalId = linkValue || null;
+                
+                await this.storage.updateTask(this.currentKeys.week, this.currentEditingTaskId, {
+                    title: title,
+                    goalId: newGoalId
+                });
+                
+                await this.loadWeeklyData();
+                
+                // Update goal progress if the goal assignment changed
+                if (previousGoalId !== newGoalId) {
+                    await this.updateGoalProgress();
+                }
+                
+                this.currentEditingTaskId = null;
                 break;
                 
             case 'priority':
@@ -1550,57 +1586,66 @@ class MultiScalePlanner {
     }
 
     // Weekly Task CRUD Methods
-    editTask(button) {
+    async editTask(button) {
         const taskItem = button.closest('.task-item');
-        const taskTitle = taskItem.querySelector('.task-title');
         const taskId = taskItem.dataset.taskId;
         
-        // Store original text
-        const originalText = taskTitle.textContent;
+        // Get current task data
+        const weekData = await this.storage.getWeekData(this.currentKeys.week);
+        const currentTask = weekData.tasks.find(t => t.id === taskId);
         
-        // Create input element
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.value = originalText;
-        input.className = 'task-title editing';
-        input.style.cssText = 'background: white; border: 1px solid #007bff; border-radius: 3px; padding: 2px 6px; outline: none; flex: 1;';
+        if (!currentTask) {
+            console.error('Task not found');
+            return;
+        }
         
-        // Replace span with input
-        taskTitle.parentNode.replaceChild(input, taskTitle);
-        input.focus();
-        input.select();
+        // Open enhanced modal for task editing
+        this.openTaskEditModal(currentTask);
+    }
+
+    async openTaskEditModal(task) {
+        this.currentModalType = 'edit-task';
+        this.currentEditingTaskId = task.id;
         
-        // Handle save on Enter or blur
-        const saveEdit = async () => {
-            const newText = input.value.trim();
-            if (newText && newText !== originalText) {
-                await this.storage.updateTask(this.currentKeys.week, taskId, {
-                    title: newText
-                });
+        // Set modal title
+        document.getElementById('modal-title').textContent = 'Edit Task';
+        
+        // Set current values
+        document.getElementById('item-title').value = task.title;
+        
+        // Show and populate goal selection
+        const linkGroup = document.getElementById('link-group');
+        const linkSelect = document.getElementById('item-link');
+        linkGroup.style.display = 'block';
+        linkSelect.innerHTML = '<option value="">No goal</option>';
+        
+        // Get available goals
+        const quarterData = await this.storage.getQuarterData(this.currentKeys.quarter);
+        quarterData.goals.forEach(goal => {
+            const option = document.createElement('option');
+            option.value = goal.id;
+            option.textContent = goal.title;
+            if (goal.id === task.goalId) {
+                option.selected = true;
             }
-            // Reload the tasks to restore normal view
-            await this.loadWeeklyData();
-            // Update goal progress in case task relationships changed
-            await this.updateGoalProgress();
-        };
-        
-        // Handle cancel on Escape
-        const cancelEdit = async () => {
-            // Reload the tasks to restore normal view
-            await this.loadWeeklyData();
-        };
-        
-        input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                saveEdit();
-            } else if (e.key === 'Escape') {
-                e.preventDefault();
-                cancelEdit();
-            }
+            linkSelect.appendChild(option);
         });
         
-        input.addEventListener('blur', saveEdit);
+        // Update label text for clarity
+        const linkLabel = document.querySelector('label[for="item-link"]');
+        if (linkLabel) {
+            linkLabel.textContent = 'Linked Goal:';
+        }
+        
+        // Update button text for editing
+        const submitButton = document.querySelector('#modal-form button[type="submit"]');
+        if (submitButton) {
+            submitButton.textContent = 'Save Changes';
+        }
+        
+        // Show modal
+        document.getElementById('modal-overlay').classList.add('active');
+        document.getElementById('item-title').focus();
     }
 
     async deleteTask(button) {
